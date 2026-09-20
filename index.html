@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>火柴人闯关战记 - 20关人机对决</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 游戏顶部状态栏：关卡、玩家血条、敌人信息 -->
+        <header class="game-header">
+            <div class="level-badge" id="level-display">第 1 / 20 关</div>
+
+            <div class="player-hud p1-hud">
+                <span class="player-name">勇者 (你)</span>
+                <div class="health-bar-container">
+                    <div id="p1-health" class="health-bar" style="width: 100%;"></div>
+                </div>
+                <span id="p1-hp-text" class="hp-text">100/100</span>
+            </div>
+
+            <div class="player-hud enemy-hud">
+                <span class="player-name" id="enemy-status-title">敌方残存: 1</span>
+                <div class="health-bar-container">
+                    <div id="enemy-health" class="health-bar enemy-hb" style="width: 100%;"></div>
+                </div>
+                <span id="enemy-hp-text" class="hp-text">敌人战力增强中</span>
+            </div>
+        </header>
+
+        <!-- 游戏主画布区域 -->
+        <main class="canvas-wrapper">
+            <canvas id="gameCanvas" width="900" height="450"></canvas>
+            
+            <!-- 开始/结算遮罩层 -->
+            <div id="start-screen" class="overlay-screen">
+                <h2 id="screen-title">🔥 火柴人闯关战记 🔥</h2>
+                <p id="screen-desc">挑战20关人机对决，击败所有敌人！</p>
+                <button id="start-btn" class="primary-btn">开始闯关</button>
+            </div>
+        </main>
+
+        <!-- 手机触控虚拟按键面板与武器切换 -->
+        <footer class="game-footer">
+            <!-- 左侧：方向与跳跃 -->
+            <div class="touch-group left-controls">
+                <button class="touch-btn" id="btn-left">◀</button>
+                <button class="touch-btn" id="btn-right">▶</button>
+                <button class="touch-btn jump-btn" id="btn-jump">▲ 跳</button>
+            </div>
+
+            <!-- 中间：武器切换栏 -->
+            <div class="weapon-toolbar">
+                <span class="toolbar-title">武器: <b id="active-weapon-name">双拳 (DMG: 1)</b></span>
+                <div class="weapon-select-row">
+                    <button class="w-select-btn active" data-w="FIST">拳</button>
+                    <button class="w-select-btn" data-w="DAGGER">匕</button>
+                    <button class="w-select-btn" data-w="PISTOL">枪</button>
+                    <button class="w-select-btn" data-w="AK47">AK</button>
+                    <button class="w-select-btn" data-w="STAFF">棍</button>
+                    <button class="w-select-btn" data-w="BLADE">刀</button>
+                    <button class="w-select-btn" data-w="KAMEHAMEHA">气功</button>
+                </div>
+            </div>
+
+            <!-- 右侧：攻击按钮 -->
+            <div class="touch-group right-controls">
+                <button class="touch-btn attack-btn" id="btn-attack">⚔ 攻击</button>
+            </div>
+        </footer>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

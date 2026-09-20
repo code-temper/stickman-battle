@@ -1,0 +1,187 @@
+/* 全局街机风格深色主题 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}
+
+body {
+    background-color: #0f172a;
+    color: #f8fafc;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.game-container {
+    width: 940px;
+    background: #1e293b;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 2px solid #334155;
+    padding: 20px;
+}
+
+/* 顶部状态栏 */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.player-hud {
+    flex: 1;
+    background: #0f172a;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+
+.p1-hud { border-left: 5px solid #000000; }
+.p2-hud { border-left: 5px solid #3b82f6; text-align: right; }
+
+.player-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #cbd5e1;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.health-bar-container {
+    width: 100%;
+    height: 14px;
+    background: #334155;
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.health-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #10b981);
+    width: 100%;
+    transition: width 0.1s ease-out;
+}
+
+.p2-hud .health-bar {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    margin-left: auto;
+}
+
+.hp-text {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.vs-badge {
+    font-size: 1.5rem;
+    font-weight: 900;
+    font-style: italic;
+    color: #ef4444;
+    padding: 0 20px;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+/* 画布与遮罩层 */
+.canvas-wrapper {
+    position: relative;
+    width: 900px;
+    height: 500px;
+    background: #090d16;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #334155;
+}
+
+#gameCanvas {
+    display: block;
+    background: linear-gradient(to bottom, #1e293b, #0f172a);
+}
+
+.overlay-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    backdrop-filter: blur(4px);
+}
+
+.overlay-screen h2 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #f8fafc;
+    text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.overlay-screen p {
+    color: #94a3b8;
+    margin-bottom: 25px;
+    font-size: 1.1rem;
+}
+
+.primary-btn {
+    padding: 12px 35px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+/* 底部操作指引与武器栏 */
+.game-footer {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.controls-guide {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.guide-box {
+    background: #0f172a;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+}
+
+.weapon-toolbar {
+    text-align: center;
+    font-size: 0.9rem;
+    background: #0f172a;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #334155;
+}
+
+.weapon-toolbar b {
+    color: #38bdf8;
+}

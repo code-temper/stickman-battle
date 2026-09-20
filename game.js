@@ -1,0 +1,389 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const startScreen = document.getElementById('start-screen');
+const startBtn = document.getElementById('start-btn');
+const screenTitle = document.getElementById('screen-title');
+const screenDesc = document.getElementById('screen-desc');
+const levelDisplay = document.getElementById('level-display');
+
+const p1HealthEl = document.getElementById('p1-health');
+const p1HpText = document.getElementById('p1-hp-text');
+const enemyHealthEl = document.getElementById('enemy-health');
+const enemyStatusTitle = document.getElementById('enemy-status-title');
+const enemyHpText = document.getElementById('enemy-hp-text');
+const activeWeaponNameEl = document.getElementById('active-weapon-name');
+const weaponSelectBtns = document.querySelectorAll('.w-select-btn');
+
+let gameRunning = false;
+const gravity = 0.6;
+const groundY = 320;
+
+let currentLevel = 1;
+const maxLevel = 20;
+
+const WEAPONS = {
+    FIST: { name: '双拳', dmg: 1, range: 45, cooldown: 15 },
+    DAGGER: { name: '匕首', dmg: 2, range: 55, cooldown: 10 },
+    PISTOL: { name: '手枪', dmg: 3, range: 300, cooldown: 25 },
+    AK47: { name: 'AK47', dmg: 4, range: 400, cooldown: 8 },
+    STAFF: { name: '长棍', dmg: 3, range: 75, cooldown: 30 },
+    BLADE: { name: '大刀', dmg: 2, range: 85, cooldown: 35 },
+    KAMEHAMEHA: { name: '龟派气功', dmg: 10, range: 600, cooldown: 90 }
+};
+
+// 角色类 (支持玩家与 AI 敌人)
+class Fighter {
+    constructor(x, color, isPlayer) {
+        this.x = x;
+        this.y = groundY;
+        this.vx = 0;
+        this.vy = 0;
+        this.width = 25;
+        this.height = 60;
+        this.color = color;
+        this.isPlayer = isPlayer;
+        
+        // 动态关卡数值缩放
+        this.maxHp = isPlayer ? 100 : (80 + currentLevel * 10);
+        this.hp = this.maxHp;
+        this.dmgBonus = isPlayer ? 1 : Math.floor(currentLevel / 4); // 敌人随关卡攻击力变强
+        
+        this.isJumping = false;
+        this.facing = isPlayer ? 1 : -1;
+        
+        this.currentWeaponKey = isPlayer ? 'FIST' : (currentLevel > 10 ? 'AK47' : 'PISTOL');
+        this.weapon = WEAPONS[this.currentWeaponKey];
+        this.attackCooldown = 0;
+        this.isAttacking = false;
+        this.attackAnimTimer = 0;
+        this.aiTimer = 0;
+    }
+
+    update(targets, effectsList) {
+        this.vy += gravity;
+        this.y += this.vy;
+        this.x += this.vx;
+
+        if (this.y >= groundY) {
+            this.y = groundY;
+            this.vy = 0;
+            this.isJumping = false;
+        }
+
+        if (this.x < 20) this.x = 20;
+        if (this.x > canvas.width - 20) this.x = canvas.width - 20;
+
+        if (this.attackCooldown > 0) this.attackCooldown--;
+        if (this.attackAnimTimer > 0) {
+            this.attackAnimTimer--;
+            if (this.attackAnimTimer === 0) this.isAttacking = false;
+        }
+
+        // AI 敌人行为逻辑
+        if (!this.isPlayer && targets.length > 0) {
+            // 寻找最近的目标（玩家）
+            let target = targets[0];
+            let dist = target.x - this.x;
+            this.facing = dist > 0 ? 1 : -1;
+
+            this.aiTimer++;
+            if (Math.abs(dist) > 80) {
+                this.vx = this.facing * (2 + currentLevel * 0.05); // 关卡越高移动越快
+                if (this.aiTimer % 90 === 0 && !this.isJumping) {
+                    this.vy = -12;
+                    this.isJumping = true;
+                }
+            } else {
+                this.vx = 0;
+                // AI 攻击判定
+                if (this.attackCooldown === 0) {
+                    this.attack(target, effectsList);
+                }
+            }
+        }
+    }
+
+    draw() {
+        ctx.save();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        const headRadius = 9;
+        const headX = this.x;
+        const headY = this.y - this.height + headRadius;
+
+        // 头
+        ctx.beginPath();
+        ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 躯干
+        const bodyTopY = headY + headRadius;
+        const bodyBottomY = this.y - 15;
+        ctx.beginPath();
+        ctx.moveTo(headX, bodyTopY);
+        ctx.lineTo(headX, bodyBottomY);
+        ctx.stroke();
+
+        // 四肢
+        let legOffset = Math.sin(Date.now() / 70) * 10 * (Math.abs(this.vx) > 0 ? 1 : 0);
+        ctx.beginPath();
+        ctx.moveTo(headX, bodyBottomY);
+        ctx.lineTo(headX - 10 + legOffset, this.y);
+        ctx.moveTo(headX, bodyBottomY);
+        ctx.lineTo(headX + 10 - legOffset, this.y);
+        ctx.stroke();
+
+        let armAngle = this.isAttacking ? (this.facing * Math.PI / 3) : 0;
+        ctx.beginPath();
+        ctx.moveTo(headX, bodyTopY + 8);
+        ctx.lineTo(headX + (18 + (this.isAttacking ? 12 : 0)) * this.facing, bodyTopY + 15 + armAngle);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    attack(target, effectsList) {
+        if (this.attackCooldown > 0) return;
+
+        this.isAttacking = true;
+        this.attackAnimTimer = 10;
+        this.attackCooldown = this.weapon.cooldown;
+
+        const distance = Math.abs(this.x - target.x);
+        let finalDmg = this.weapon.dmg + (this.isPlayer ? 0 : this.dmgBonus);
+
+        if (['PISTOL', 'AK47', 'KAMEHAMEHA'].includes(this.currentWeaponKey)) {
+            effectsList.push(new Effect(this.x + 20 * this.facing, this.y - 30, this.currentWeaponKey.toLowerCase(), this.facing, target, finalDmg));
+        } else {
+            effectsList.push(new Effect(this.x + 20 * this.facing, this.y - 30, 'melee', this.facing, null, finalDmg));
+            if (distance <= this.weapon.range && Math.abs(this.y - target.y) < 40) {
+                target.takeDamage(finalDmg);
+            }
+        }
+    }
+
+    switchWeapon(weaponKey) {
+        if (WEAPONS[weaponKey]) {
+            this.currentWeaponKey = weaponKey;
+            this.weapon = WEAPONS[weaponKey];
+            activeWeaponNameEl.textContent = `${this.weapon.name} (DMG: ${this.weapon.dmg})`;
+            
+            weaponSelectBtns.forEach(btn => {
+                if(btn.dataset.w === weaponKey) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+    }
+
+    takeDamage(amount) {
+        this.hp -= amount;
+        if (this.hp < 0) this.hp = 0;
+    }
+}
+
+// 光影与子弹特效类
+class Effect {
+    constructor(x, y, type, facing, target, dmg) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.facing = facing;
+        this.target = target;
+        this.dmg = dmg;
+        this.life = 30;
+        if (type === 'pistol') this.vx = 14 * facing;
+        if (type === 'ak47') this.vx = 18 * facing;
+        if (type === 'kamehameha') { this.vx = 9 * facing; this.life = 50; }
+    }
+
+    update(targets) {
+        this.life--;
+        if (['pistol', 'ak47', 'kamehameha'].includes(this.type)) {
+            this.x += this.vx;
+            targets.forEach(t => {
+                if (Math.abs(this.x - t.x) < 25 && Math.abs(this.y - t.y) < 45) {
+                    t.takeDamage(this.dmg);
+                    this.life = 0;
+                }
+            });
+        }
+    }
+
+    draw() {
+        ctx.save();
+        if (this.type === 'pistol') {
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(this.x, this.y, 8, 3);
+        } else if (this.type === 'ak47') {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(this.x, this.y, 12, 4);
+        } else if (this.type === 'kamehameha') {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#38bdf8';
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 16, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+}
+
+// 游戏全局实例
+let player = new Fighter(150, '#f8fafc', true);
+let enemies = [];
+let effects = [];
+const keys = {};
+
+// 初始化关卡敌人 (由少变多，最高每关同时出现3个敌人)
+function initLevelEnemies() {
+    enemies = [];
+    let enemyCount = Math.min(3, 1 + Math.floor((currentLevel - 1) / 5));
+    for (let i = 0; i < enemyCount; i++) {
+        let enemyColors = ['#ef4444', '#a855f7', '#3b82f6'];
+        let en = new Fighter(750 - i * 60, enemyColors[i % enemyColors.length], false);
+        // 高关卡敌人武器配置升级
+        if (currentLevel >= 5) en.switchWeapon('STAFF');
+        if (currentLevel >= 10) en.switchWeapon('AK47');
+        if (currentLevel >= 15) en.switchWeapon('KAMEHAMEHA');
+        enemies.push(en);
+    }
+}
+
+// 触控与键盘事件绑定
+window.addEventListener('keydown', (e) => {
+    keys[e.key] = true;
+    if (!gameRunning) return;
+    if (e.key === 'j' || e.key === 'J') player.attack(enemies[0] || player, effects);
+    if ((e.key === 'w' || e.key === 'W') && !player.isJumping) { player.vy = -13; player.isJumping = true; }
+    if (e.key >= '1' && e.key <= '7') {
+        const keysList = ['FIST', 'DAGGER', 'PISTOL', 'AK47', 'STAFF', 'BLADE', 'KAMEHAMEHA'];
+        player.switchWeapon(keysList[parseInt(e.key) - 1]);
+    }
+});
+window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+// 手机虚拟按钮事件
+function bindTouchButton(id, startCallback, endCallback) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); if (startCallback) startCallback(); });
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); if (endCallback) endCallback(); });
+    btn.addEventListener('mousedown', () => { if (startCallback) startCallback(); });
+    btn.addEventListener('mouseup', () => { if (endCallback) endCallback(); });
+}
+
+bindTouchButton('btn-left', () => { keys['a'] = true; }, () => { keys['a'] = false; });
+bindTouchButton('btn-right', () => { keys['d'] = true; }, () => { keys['d'] = false; });
+bindTouchButton('btn-jump', () => { if (!player.isJumping) { player.vy = -13; player.isJumping = true; } });
+bindTouchButton('btn-attack', () => { if (enemies.length > 0) player.attack(enemies[0], effects); });
+
+weaponSelectBtns.forEach(btn => {
+    btn.addEventListener('click', () => { player.switchWeapon(btn.dataset.w); });
+});
+
+function handlePlayerInput() {
+    player.vx = 0;
+    if (keys['a'] || keys['A'] || keys['ArrowLeft']) player.vx = -5;
+    if (keys['d'] || keys['D'] || keys['ArrowRight']) player.vx = 5;
+}
+
+function updateUI() {
+    p1HealthEl.style.width = `${(player.hp / player.maxHp) * 100}%`;
+    p1HpText.textContent = `${player.hp}/${player.maxHp}`;
+    levelDisplay.textContent = `第 ${currentLevel} / ${maxLevel} 关`;
+
+    if (enemies.length > 0) {
+        let primaryEnemy = enemies[0];
+        enemyStatusTitle.textContent = `敌方残存: ${enemies.length}`;
+        enemyHealthEl.style.width = `${(primaryEnemy.hp / primaryEnemy.maxHp) * 100}%`;
+        enemyHpText.textContent = `HP: ${primaryEnemy.hp}/${primaryEnemy.maxHp}`;
+    }
+}
+
+function gameLoop() {
+    if (!gameRunning) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 绘制地面
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    ctx.lineTo(canvas.width, groundY);
+    ctx.stroke();
+
+    handlePlayerInput();
+    player.update(enemies, effects);
+
+    // 更新与清除敌人
+    enemies.forEach((en, index) => {
+        en.update([player], effects);
+        if (en.hp <= 0) {
+            enemies.splice(index, 1);
+        }
+    });
+
+    // 更新特效
+    effects.forEach((eff, index) => {
+        let targets = eff.facing > 0 ? enemies : [player];
+        eff.update(targets);
+        eff.draw();
+        if (eff.life <= 0) effects.splice(index, 1);
+    });
+
+    player.draw();
+    enemies.forEach(en => en.draw());
+
+    updateUI();
+
+    // 胜负判定
+    if (player.hp <= 0) {
+        endGame(false, "你被击败了！");
+    } else if (enemies.length === 0) {
+        if (currentLevel >= maxLevel) {
+            endGame(true, "🏆 恭喜通关全部20关！");
+        } else {
+            currentLevel++;
+            endGame(false, `第 ${currentLevel - 1} 关胜利！`, "进入下一关");
+        }
+    } else {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+function startGame() {
+    player = new Fighter(150, '#f8fafc', true);
+    effects = [];
+    initLevelEnemies();
+    player.switchWeapon('FIST');
+    
+    startScreen.style.display = 'none';
+    gameRunning = true;
+    gameLoop();
+}
+
+function endGame(isVictory, titleText, btnText = "重新开始") {
+    gameRunning = false;
+    startScreen.style.display = 'flex';
+    screenTitle.textContent = titleText;
+    screenDesc.textContent = isVictory ? "你是真正的火柴人格斗之王！" : `当前进度：第 ${currentLevel} 关`;
+    startBtn.textContent = btnText;
+}
+
+startBtn.addEventListener('click', () => {
+    if (screenTitle.textContent.includes("通关")) {
+        currentLevel = 1;
+    }
+    startGame();
+});
