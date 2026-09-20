@@ -1,29 +1,37 @@
-/* 全局街机风格深色主题 */
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 body {
-    background-color: #0f172a;
+    background-color: #090d16;
     color: #f8fafc;
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow: hidden; /* 禁止页面滚动，强制一屏显示 */
 }
 
 .game-container {
-    width: 940px;
+    width: 100%;
+    max-width: 920px;
+    height: 100vh;
+    max-height: 520px; /* 限制最大高度，适配手机横屏 */
     background: #1e293b;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    border: 2px solid #334155;
-    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
+    border: 1px solid #334155;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* 顶部状态栏 */
@@ -31,77 +39,78 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.level-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.75rem;
 }
 
 .player-hud {
     flex: 1;
     background: #0f172a;
-    padding: 10px 15px;
-    border-radius: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
     border: 1px solid #334155;
 }
 
-.p1-hud { border-left: 5px solid #000000; }
-.p2-hud { border-left: 5px solid #3b82f6; text-align: right; }
+.p1-hud { border-left: 4px solid #f8fafc; }
+.enemy-hud { border-left: 4px solid #ef4444; }
 
 .player-name {
-    font-size: 0.9rem;
+    font-size: 0.65rem;
     font-weight: bold;
     color: #cbd5e1;
-    display: block;
-    margin-bottom: 5px;
+    margin-bottom: 1px;
 }
 
 .health-bar-container {
     width: 100%;
-    height: 14px;
+    height: 8px;
     background: #334155;
-    border-radius: 7px;
+    border-radius: 4px;
     overflow: hidden;
-    position: relative;
-    margin-bottom: 4px;
+    margin-bottom: 1px;
 }
 
 .health-bar {
     height: 100%;
     background: linear-gradient(90deg, #22c55e, #10b981);
     width: 100%;
-    transition: width 0.1s ease-out;
 }
 
-.p2-hud .health-bar {
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
-    margin-left: auto;
+.enemy-hb {
+    background: linear-gradient(90deg, #ef4444, #f87171) !important;
 }
 
 .hp-text {
-    font-size: 0.75rem;
+    font-size: 0.55rem;
     color: #94a3b8;
 }
 
-.vs-badge {
-    font-size: 1.5rem;
-    font-weight: 900;
-    font-style: italic;
-    color: #ef4444;
-    padding: 0 20px;
-    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-}
-
-/* 画布与遮罩层 */
+/* 画布区域自适应 */
 .canvas-wrapper {
     position: relative;
-    width: 900px;
-    height: 500px;
-    background: #090d16;
-    border-radius: 10px;
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+    background: #05070c;
+    border-radius: 6px;
     overflow: hidden;
-    border: 2px solid #334155;
+    border: 1px solid #334155;
+    margin: 4px 0;
 }
 
 #gameCanvas {
     display: block;
+    width: 100%;
+    height: 100%;
     background: linear-gradient(to bottom, #1e293b, #0f172a);
 }
 
@@ -111,77 +120,115 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(15, 23, 42, 0.85);
+    background: rgba(15, 23, 42, 0.92);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 10;
-    backdrop-filter: blur(4px);
 }
 
 .overlay-screen h2 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
     color: #f8fafc;
-    text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
 }
 
 .overlay-screen p {
     color: #94a3b8;
-    margin-bottom: 25px;
-    font-size: 1.1rem;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
 }
 
 .primary-btn {
-    padding: 12px 35px;
-    font-size: 1.1rem;
+    padding: 8px 24px;
+    font-size: 0.9rem;
     font-weight: bold;
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    transition: all 0.2s ease;
 }
 
-.primary-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
-/* 底部操作指引与武器栏 */
+/* 底部触控面板紧凑排版，确保不被切掉 */
 .game-footer {
-    margin-top: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.controls-guide {
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
-    color: #94a3b8;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
-.guide-box {
-    background: #0f172a;
-    padding: 6px 12px;
+.touch-group {
+    display: flex;
+    gap: 4px;
+}
+
+.touch-btn {
+    background: rgba(51, 65, 85, 0.85);
+    color: white;
+    border: 1px solid #64748b;
     border-radius: 6px;
-    border: 1px solid #334155;
+    width: 42px;
+    height: 38px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+.touch-btn:active, .w-select-btn:active {
+    background: #3b82f6;
+}
+
+.jump-btn {
+    background: rgba(16, 185, 129, 0.8);
+}
+
+.attack-btn {
+    background: rgba(239, 68, 68, 0.85);
+    width: 65px;
+    font-size: 0.85rem;
+}
+
+/* 武器工具栏 */
 .weapon-toolbar {
-    text-align: center;
-    font-size: 0.9rem;
+    flex: 1;
     background: #0f172a;
-    padding: 8px;
+    padding: 3px 6px;
     border-radius: 6px;
     border: 1px solid #334155;
+    text-align: center;
 }
 
-.weapon-toolbar b {
-    color: #38bdf8;
+.toolbar-title {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-bottom: 2px;
+}
+
+.toolbar-title b { color: #38bdf8; }
+
+.weapon-select-row {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+}
+
+.w-select-btn {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #475569;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    cursor: pointer;
+}
+
+.w-select-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #60a5fa;
 }
