@@ -22,13 +22,11 @@ const groundY = 310;
 let currentLevel = 1;
 const maxLevel = 20;
 
+// 已移除：DAGGER, STAFF, BLADE
 const WEAPONS = {
     FIST: { name: '双拳', dmg: 15, range: 45, cooldown: 12 },
-    DAGGER: { name: '匕首', dmg: 25, range: 55, cooldown: 10 },
     PISTOL: { name: '手枪', dmg: 35, range: 350, cooldown: 20 },
     AK47: { name: 'AK47', dmg: 45, range: 420, cooldown: 8 },
-    STAFF: { name: '长棍', dmg: 40, range: 75, cooldown: 25 },
-    BLADE: { name: '大刀', dmg: 50, range: 85, cooldown: 30 },
     KAMEHAMEHA: { name: '龟派气功', dmg: 120, range: 600, cooldown: 70 }
 };
 
@@ -44,13 +42,12 @@ class Fighter {
         this.color = color;
         this.isPlayer = isPlayer;
         
-        // 需求4：血量改为 500
         this.maxHp = 500;
         this.hp = 500;
         this.dmgBonus = isPlayer ? 0 : Math.floor(currentLevel * 3);
         
         this.isJumping = false;
-        this.facing = isPlayer ? 1 : -1; // 1: 朝右, -1: 朝左
+        this.facing = isPlayer ? 1 : -1;
         
         this.currentWeaponKey = isPlayer ? 'FIST' : (currentLevel > 10 ? 'AK47' : 'PISTOL');
         this.weapon = WEAPONS[this.currentWeaponKey];
@@ -75,14 +72,14 @@ class Fighter {
         if (this.x < 25) this.x = 25;
         if (this.x > canvas.width - 25) this.x = canvas.width - 25;
 
-        // 动作流畅度：动画帧自增
+        // 动画帧自增
         if (Math.abs(this.vx) > 0 || this.isJumping) {
             this.animFrame += 0.2;
         } else {
             this.animFrame = 0;
         }
 
-        // 修复2：精准转身控制（根据移动方向或朝向目标锁定转身）
+        // 精准转身控制
         if (this.vx > 0) this.facing = 1;
         else if (this.vx < 0) this.facing = -1;
 
@@ -96,10 +93,10 @@ class Fighter {
         if (!this.isPlayer && targets.length > 0) {
             let target = targets[0];
             let dist = target.x - this.x;
-            this.facing = dist > 0 ? 1 : -1; // AI 面向玩家
+            this.facing = dist > 0 ? 1 : -1;
 
             this.aiTimer++;
-            if (Math.abs(dist) > 70) {
+            if (Math.abs(dist) > 80) {
                 this.vx = this.facing * (2.2 + currentLevel * 0.04);
                 if (this.aiTimer % 80 === 0 && !this.isJumping) {
                     this.vy = -12;
@@ -138,18 +135,16 @@ class Fighter {
         ctx.lineTo(headX, bodyBottomY);
         ctx.stroke();
 
-        // 3. 修复1：流畅的四肢摆动动画
+        // 3. 四肢摆动
         let swing = Math.sin(this.animFrame) * 14;
         ctx.beginPath();
-        // 左腿
         ctx.moveTo(headX, bodyBottomY);
         ctx.lineTo(headX - 10 + swing, this.y);
-        // 右腿
         ctx.moveTo(headX, bodyBottomY);
         ctx.lineTo(headX + 10 - swing, this.y);
         ctx.stroke();
 
-        // 4. 双臂与攻击姿态
+        // 4. 双臂与手臂位置
         let armAngle = this.isAttacking ? (this.facing * Math.PI / 2.5) : 0;
         let handX = headX + (20 + (this.isAttacking ? 12 : 0)) * this.facing;
         let handY = bodyTopY + 12 + armAngle;
@@ -159,28 +154,17 @@ class Fighter {
         ctx.lineTo(handX, handY);
         ctx.stroke();
 
-        // 修复3：绘制每种武器对应的手持武器模型
+        // 绘制剩余 4 种武器模型
         this.drawWeapon(handX, handY);
 
         ctx.restore();
     }
 
-    // 修复3：详细的武器绘制函数
     drawWeapon(wx, wy) {
         ctx.save();
         ctx.lineWidth = 2;
         
         switch (this.currentWeaponKey) {
-            case 'DAGGER':
-                ctx.strokeStyle = '#38bdf8';
-                ctx.beginPath();
-                ctx.moveTo(wx, wy);
-                ctx.lineTo(wx + 16 * this.facing, wy - 4);
-                ctx.stroke();
-                // 匕首护手
-                ctx.fillStyle = '#cbd5e1';
-                ctx.fillRect(wx + 2 * this.facing, wy - 3, 3, 6);
-                break;
             case 'PISTOL':
                 ctx.fillStyle = '#64748b';
                 ctx.fillRect(wx, wy - 2, 14 * this.facing, 6);
@@ -188,34 +172,14 @@ class Fighter {
                 ctx.fillRect(wx + 4 * this.facing, wy + 4, 4, 6);
                 break;
             case 'AK47':
-                ctx.fillStyle = '#b45309'; // 枪托木纹
+                ctx.fillStyle = '#b45309';
                 ctx.fillRect(wx - 4 * this.facing, wy, 8 * this.facing, 5);
-                ctx.fillStyle = '#334155'; // 枪身
+                ctx.fillStyle = '#334155';
                 ctx.fillRect(wx + 4 * this.facing, wy - 2, 22 * this.facing, 6);
-                ctx.fillStyle = '#1e293b'; // 弹夹
+                ctx.fillStyle = '#1e293b';
                 ctx.fillRect(wx + 10 * this.facing, wy + 4, 4, 8);
                 break;
-            case 'STAFF':
-                ctx.strokeStyle = '#a855f7';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(wx - 8 * this.facing, wy - 20);
-                ctx.lineTo(wx + 8 * this.facing, wy + 20);
-                ctx.stroke();
-                break;
-            case 'BLADE':
-                ctx.strokeStyle = '#ec4899';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(wx, wy);
-                ctx.lineTo(wx + 28 * this.facing, wy - 18);
-                ctx.stroke();
-                // 大刀宽背
-                ctx.fillStyle = '#f472b6';
-                ctx.fillRect(wx + 5 * this.facing, wy - 8, 14 * this.facing, 4);
-                break;
             case 'KAMEHAMEHA':
-                // 气功蓄力蓝色能量球光晕
                 ctx.shadowBlur = 12;
                 ctx.shadowColor = '#38bdf8';
                 ctx.fillStyle = '#38bdf8';
@@ -223,7 +187,7 @@ class Fighter {
                 ctx.arc(wx + 6 * this.facing, wy, 10, 0, Math.PI * 2);
                 ctx.fill();
                 break;
-            default: // FIST 双拳微光
+            default: // FIST 双拳
                 ctx.fillStyle = 'rgba(255,255,255,0.8)';
                 ctx.beginPath();
                 ctx.arc(wx, wy, 4, 0, Math.PI * 2);
@@ -240,13 +204,13 @@ class Fighter {
         this.attackAnimTimer = 10;
         this.attackCooldown = this.weapon.cooldown;
 
-        const distance = Math.abs(this.x - target.x);
         let finalDmg = this.weapon.dmg + (this.isPlayer ? 0 : this.dmgBonus);
 
         if (['PISTOL', 'AK47', 'KAMEHAMEHA'].includes(this.currentWeaponKey)) {
             effectsList.push(new Effect(this.x + 20 * this.facing, this.y - 30, this.currentWeaponKey.toLowerCase(), this.facing, finalDmg));
-        } else {
+        } else { // 只有双拳为近战攻击
             effectsList.push(new Effect(this.x + 25 * this.facing, this.y - 30, 'melee', this.facing, finalDmg));
+            const distance = Math.abs(this.x - target.x);
             if (distance <= this.weapon.range && Math.abs(this.y - target.y) < 45) {
                 target.takeDamage(finalDmg);
             }
@@ -272,7 +236,7 @@ class Fighter {
     }
 }
 
-// 光影与子弹特效类
+// 子弹与光效类
 class Effect {
     constructor(x, y, type, facing, dmg) {
         this.x = x;
@@ -324,7 +288,7 @@ class Effect {
     }
 }
 
-// 游戏全局实例与初始化
+// 游戏全局变量与初始化
 let player = new Fighter(150, '#f8fafc', true);
 let enemies = [];
 let effects = [];
@@ -336,27 +300,28 @@ function initLevelEnemies() {
     for (let i = 0; i < enemyCount; i++) {
         let enemyColors = ['#ef4444', '#a855f7', '#3b82f6'];
         let en = new Fighter(750 - i * 50, enemyColors[i % enemyColors.length], false);
-        if (currentLevel >= 4) en.switchWeapon('STAFF');
-        if (currentLevel >= 9) en.switchWeapon('AK47');
-        if (currentLevel >= 14) en.switchWeapon('KAMEHAMEHA');
+        // AI 敌人的武器根据关卡递进
+        if (currentLevel >= 4 && currentLevel < 10) en.switchWeapon('PISTOL');
+        if (currentLevel >= 10 && currentLevel < 16) en.switchWeapon('AK47');
+        if (currentLevel >= 16) en.switchWeapon('KAMEHAMEHA');
         enemies.push(en);
     }
 }
 
-// 键盘控制
+// 键盘控制（按键 1-4 对应 4 种武器）
 window.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     if (!gameRunning) return;
     if (e.key === 'j' || e.key === 'J') player.attack(enemies[0] || player, effects);
     if ((e.key === 'w' || e.key === 'W') && !player.isJumping) { player.vy = -13; player.isJumping = true; }
-    if (e.key >= '1' && e.key <= '7') {
-        const keysList = ['FIST', 'DAGGER', 'PISTOL', 'AK47', 'STAFF', 'BLADE', 'KAMEHAMEHA'];
+    if (e.key >= '1' && e.key <= '4') {
+        const keysList = ['FIST', 'PISTOL', 'AK47', 'KAMEHAMEHA'];
         player.switchWeapon(keysList[parseInt(e.key) - 1]);
     }
 });
 window.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
-// 触控按钮绑定
+// 触控按键绑定
 function bindTouchButton(id, startCallback, endCallback) {
     const btn = document.getElementById(id);
     if (!btn) return;
@@ -399,7 +364,6 @@ function gameLoop() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 绘制地面
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 2;
     ctx.beginPath();
